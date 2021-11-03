@@ -869,5 +869,5 @@ datalines;
 ;
 
 proc reg data=rm8;
-model calledback= recruiteriswhite recruiterismale malecandidate EliteSchoolCandidate BigCompanyCandidate;
+model calledback= recruiteriswhite recruiterismale EliteSchoolCandidate BigCompanyCandidate;
 run;
