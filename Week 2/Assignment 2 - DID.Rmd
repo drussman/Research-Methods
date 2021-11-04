@@ -1,0 +1,75 @@
+---
+title: "RM Assignment 2"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(stargazer)
+setwd("~/Documents/2.Research Methods/Week 9")
+data=read.csv("vaping-ban-panel.csv")
+View(data)
+```
+
+```{r}
+#plot in GGplot
+ggplot(data,aes(Year,Lung.Hospitalizations,group=State.Id,color=Vaping.Ban))+stat_summary(geom = 'line')+geom_vline(xintercept=2021)+theme_minimal()
+
+data$Group = factor(if_else(data$State.Id<=23,1,0))
+ggplot(data,aes(Year,Lung.Hospitalizations,group=Group,color=Vaping.Ban))+stat_summary(geom = 'line')+geom_vline(xintercept=2021)+theme_minimal()
+```
+
+
+```{r}
+treatment = vector(length=length(table(data$Year)))
+control = vector(length=length(table(data$Year)))
+year = vector(length=length(table(data$Year)))
+hosp_t=vector(length=length(table(data$Year)))
+hosp_c=vector(length=length(table(data$Year)))
+
+for (i in c(1:length(table(data$Year)))) {
+  d=filter(data,data$Year==(i+2009) & data$State.Id <24)
+  hosp_t[i]=mean(d$Lung.Hospitalizations)
+  treatment[i]=mean(d$Vaping.Ban)
+  d=filter(data,data$Year==(i+2009) & data$State.Id >=24)
+  hosp_c[i]=mean(d$Lung.Hospitalizations)
+  year[i]=2009+i
+  control[i]=mean(d$Vaping.Ban)
+}
+
+data1=data.frame(cbind(year,hosp_t,hosp_c))
+
+ggplot(data1, aes(x=year)) + geom_line(aes(y=hosp_t), color = "green") + geom_line(aes(y=hosp_c),color='red')
+
+```
+
+```{r}
+#analyze parallel trends
+
+data2=filter(data,data$Year<2021)
+
+ggplot(data2,aes(Year,Lung.Hospitalizations,group=Group,color=Vaping.Ban))+stat_summary(geom = 'line')+theme_minimal()
+
+partrends=lm(data=data2,Lung.Hospitalizations ~ Year + Group + Year*Group)
+summary(partrends)
+
+stargazer(partrends, type='text', title= ' Table 1: Parallel Trends Analysis', out="ParTrends.txt", digits=2, covariate.labels=c("Year","Treatment States", "Treatment States by Year Interaction"), dep.var.labels=c("Number of Hospitalizations Per Year"))
+```
+
+```{r}
+#run DID regression
+didreg=lm(data=data, data$Lung.Hospitalizations ~ data$Year*data$Vaping.Ban)
+summary(didreg)
+
+stargazer(didreg, type='text', title= ' Table 2: Difference in Difference Analysis', out="DID.txt", digits=2, covariate.labels=c("Year","Vaping Ban Treatment", "Difference in Difference Estimator"), dep.var.labels=c("Number of Hospitalizations Per Year"))
+```
+
+
+
+
+
+
+
+There are 2 state level fixed effect (vaping ban and state). The vaping ban results in a significant change in hospitalizations within the states that receive it. States 1-23 are significantly different than states 24-50 (i.e. the states that are to receive the ban are already different than the states that won't receive the ban). Yes, we reject the hypothesis
+that all state fixed effects are zero
