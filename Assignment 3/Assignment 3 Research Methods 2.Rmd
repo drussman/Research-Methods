@@ -5,8 +5,10 @@ output: html_notebook
 
 ```{r}
 library(cobalt)
+library(tidyverse)
+library(stargazer)
 
-setwd("~/Documents/2.Research Methods/Week 10")
+setwd("~/Documents/2.Research Methods/Week 10/Assignment 3")
 data=read.csv("sports-and-education.csv")
 View(data)
 ```
@@ -14,7 +16,7 @@ View(data)
 
 ```{r}
 #create balance table
-balance_table = bal.tab(data[,c("Academic.Quality","Athletic.Quality","Near.Big.Market")],treat=data$Ranked.2017)
+balance_table = bal.tab(data[,c("Academic.Quality","Athletic.Quality","Near.Big.Market")], treat=data$Ranked.2017)
 balance_table= balance_table$Balance[,1:2]
 balance_table$P_Value=c(t.test(data$Academic.Quality~data$Ranked.2017)$p.value,t.test(data$Athletic.Quality~data$Ranked.2017)$p.value,t.test(data$Near.Big.Market~data$Ranked.2017)$p.value)
 balance_table
@@ -69,5 +71,9 @@ model4=lm(data=data, data$Alumni.Donations.2018 ~ data$Athletic.Quality + data$C
 summary(model4)
 
 stargazer(model4, type='text', title= 'Model for Alumni Donations with Ranked Propensity Score Blocking', out="assignment3.txt", digits=2, covariate.labels=c("Athletic Quality","College Fixed Effects", "Near Big Market","Academic Quality","Ranked Propensity Score Blocking", "Intercept"), dep.var.labels=c("Alumni Donations"),notes = c("The above table demonstrates", "the positive effect on alumni donations", "of a college being ranked top 50"))
+
+model5=lm(data=data, data$Alumni.Donations.2018 ~ data$Athletic.Quality + data$College.Id + data$Near.Big.Market + data$Academic.Quality + data$Ranked.2017)
+summary(model5)
 ```
 
+the propensity score model estimates that alumni donations increase by $200K if the school is ranked (with removal of the near big market variable). While using the true ranking value from the data results in an estimate of $500K increase in alumni donations if ranked in the top 50. The Propensity
