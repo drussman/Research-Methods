@@ -1,0 +1,73 @@
+---
+title: "HW3 Research Methods 2 - Russman"
+output: html_notebook
+---
+
+```{r}
+library(cobalt)
+
+setwd("~/Documents/2.Research Methods/Week 10")
+data=read.csv("sports-and-education.csv")
+View(data)
+```
+
+
+```{r}
+#create balance table
+balance_table = bal.tab(data[,c("Academic.Quality","Athletic.Quality","Near.Big.Market")],treat=data$Ranked.2017)
+balance_table= balance_table$Balance[,1:2]
+balance_table$P_Value=c(t.test(data$Academic.Quality~data$Ranked.2017)$p.value,t.test(data$Athletic.Quality~data$Ranked.2017)$p.value,t.test(data$Near.Big.Market~data$Ranked.2017)$p.value)
+balance_table
+```
+treatment and control groups differ significantly on athletic quality and near big market
+
+```{r}
+model = lm(data=data, data$Ranked.2017 ~ data$Academic.Quality + data$Athletic.Quality + data$Near.Big.Market + data$Alumni.Donations.2018)
+summary(model)
+
+model2 = glm(data=data, family=binomial, data$Ranked.2017 ~ data$Academic.Quality + data$Athletic.Quality + data$Near.Big.Market + data$Alumni.Donations.2018)
+summary(model2)
+
+model3 = glm(data=data, family=binomial, data$Ranked.2017 ~ data$Athletic.Quality + data$Academic.Quality + data$Alumni.Donations.2018)
+summary(model3)
+```
+
+removed near big market because the model had an R^2 of 1 and perfectly predicted the treatment. new model has R^2 near .36 and has some variability in the p-scores. Propensity score methods won't be effective in this case if all variables are included and the p-score perfectly matches the true treatment. There won't be a way to match or block very well without variability in the p-scores
+
+```{r}
+prop_score=data.frame(p_score = predict(model3, type= "response"), ranked = data$Ranked.2017)
+data$propensity_score=predict(model3, type= "response")
+prop_score
+```
+
+```{r}
+ggplot(filter(data,data$Ranked.2017==1),aes(x = propensity_score, color = "blue")) + geom_histogram(binwidth = .02, fill = "black", alpha=.5, position = "identity") + geom_density() + theme_minimal()
+
+ggplot(filter(data,data$Ranked.2017==0),aes(x = propensity_score, color = "green")) + geom_histogram(binwidth = .02, fill = "blue", alpha=.5, position = "identity") + geom_density() + theme_minimal()
+
+```
+
+```{r}
+#adding blocks
+data=data[order(data$propensity_score), ]
+
+data$block[1:10]=1
+data$block[10:20]=2
+data$block[20:30]=3
+data$block[30:40]=4
+data$block[40:50]=5
+data$block[50:60]=6
+data$block[60:70]=7
+data$block[70:80]=8
+data$block[80:90]=9
+data$block[90:100]=10
+
+```
+
+```{r}
+model4=lm(data=data, data$Alumni.Donations.2018 ~ data$Athletic.Quality + data$College.Id + data$Near.Big.Market + data$Academic.Quality + data$block)
+summary(model4)
+
+stargazer(model4, type='text', title= 'Model for Alumni Donations with Ranked Propensity Score Blocking', out="assignment3.txt", digits=2, covariate.labels=c("Athletic Quality","College Fixed Effects", "Near Big Market","Academic Quality","Ranked Propensity Score Blocking", "Intercept"), dep.var.labels=c("Alumni Donations"),notes = c("The above table demonstrates", "the positive effect on alumni donations", "of a college being ranked top 50"))
+```
+

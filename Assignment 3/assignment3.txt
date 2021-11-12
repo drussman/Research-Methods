@@ -1,0 +1,36 @@
+
+Model for Alumni Donations with Ranked Propensity Score Blocking
+========================================================================
+                                           Dependent variable:          
+                                 ---------------------------------------
+                                            Alumni Donations            
+------------------------------------------------------------------------
+Athletic Quality                               -583.73***               
+                                                 (46.22)                
+                                                                        
+College Fixed Effects                             0.22                  
+                                                 (0.30)                 
+                                                                        
+Near Big Market                                 144.03***               
+                                                 (45.96)                
+                                                                        
+Academic Quality                                480.40***               
+                                                 (35.61)                
+                                                                        
+Ranked Propensity Score Blocking                211.57***               
+                                                 (8.73)                 
+                                                                        
+Intercept                                      -367.66***               
+                                                 (33.29)                
+                                                                        
+------------------------------------------------------------------------
+Observations                                       100                  
+R2                                                0.98                  
+Adjusted R2                                       0.98                  
+Residual Std. Error                          85.61 (df = 94)            
+F Statistic                             1,071.33*** (df = 5; 94)        
+========================================================================
+Note:                                        *p<0.1; **p<0.05; ***p<0.01
+                                            The above table demonstrates
+                                 the positive effect on alumni donations
+                                        of a college being ranked top 50
