@@ -5,7 +5,7 @@ Second Stage OLS for Jail Sentence on Recidivism
                     ---------------------------
                             Recidivism         
 -----------------------------------------------
-Months in Sentence            0.14***          
+Republican Judge              0.14***          
                               (0.01)           
                                                
 Severity of Crime             0.19***          
