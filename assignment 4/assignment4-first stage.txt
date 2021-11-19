@@ -1,0 +1,24 @@
+
+First Stage OLS for Republican Judge Instrument Variable on Jail Sentence
+===============================================
+                        Dependent variable:    
+                    ---------------------------
+                        Months in Sentence     
+-----------------------------------------------
+Republican Judge              3.22***          
+                              (0.37)           
+                                               
+Severity of Crime            18.15***          
+                              (0.23)           
+                                               
+Intercept                    -19.47***         
+                              (0.52)           
+                                               
+-----------------------------------------------
+Observations                   5,000           
+R2                             0.57            
+Adjusted R2                    0.57            
+Residual Std. Error      12.99 (df = 4997)     
+F Statistic         3,249.55*** (df = 2; 4997) 
+===============================================
+Note:               *p<0.1; **p<0.05; ***p<0.01

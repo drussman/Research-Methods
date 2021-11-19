@@ -1,0 +1,100 @@
+---
+title: "RM HW #4 RUSSMAN"
+output: html_notebook
+---
+
+The cycle of crime theory asserts that overly harsh sentencing leads to more crime
+
+This is an interesting design and seems to touch on mechanisms behind the theory of interest. As researchers we cannot manipulate length of sentence, however we view sentencing as a causal shock and look at downstream outcomes. This implies that sentencing has some variability. Depending on who you ask this may or may not be true. Judges and juries are human and prone to bias and influence so there is variability in sentencing, however the variability may pertain to race, age, gender, personality/likeability and other factors and these factors would need to be controlled for. The sentencing effects jail time which in turn may have a causal influence on repeat offenses, with the theory that higher jail time leads to higher likelihood of recidivism. 
+
+```{r}
+library(tidyverse)
+library(cobalt)
+library(stargazer)
+library(AER)
+rm(list=ls())
+setwd("~/Documents/2.Research Methods/Week 11")
+data=read.csv("crime-iv.csv")
+View(data)
+
+```
+
+
+```{r}
+#balance test
+balance_table = bal.tab(data[,c("Severity.Of.Crime","Months.In.Jail")], treat=data$Republican.Judge, disp = c("means", "sds"))
+balance_table= balance_table$Balance[,1:6]
+balance_table$P_Value=c(t.test(data$Severity.Of.Crime~data$Republican.Judge)$p.value,t.test(data$Months.In.Jail~data$Republican.Judge)$p.value)
+balance_table
+
+```
+
+groups are statistically significantly different along severity of crime and month in jail by judge, does not appear randomly assigned. The republican judges are assigned to the less severe crimes and doling out more severe punishments, with the mean difference of 3 months in jail. If we ignore the fact that judges may not be randomly assigned, or if we assume randommness in the severity of crime designation then republican judges as an instrument variable does result in statistically different months in jail a.k.a treatments lead to differing compliance
+
+in the first stage OLS we will use the republican judge as the instrument variable (assuming random assignment) and predict the jail sentence, while controlling for the severity of the crime
+
+```{r}
+#first stage OLS
+model1=lm(data=data, Months.In.Jail ~ Republican.Judge + Severity.Of.Crime)
+summary(model1)
+
+stargazer(model1, type='text', title= 'First Stage OLS for Republican Judge Instrument Variable on Jail Sentence', out="assignment4-first stage.txt", digits=2, covariate.labels=c("Republican Judge","Severity of Crime", "Intercept"), dep.var.labels=c("Months in Sentence"))
+
+```
+
+the interpretation of the resulting model is that individuals with a republican judge receive an additional 3.22 months of sentence than those without a republican judge
+
+```{r}
+#second stage OLS/ reduced form
+
+model2=glm(data=data, Recidivates ~ Republican.Judge + Severity.Of.Crime , family="binomial")
+summary(model2)
+
+stargazer(model2, type='text', title= 'Second Stage OLS for Jail Sentence on Recidivism', out="assignment4-second stage.txt", digits=2, covariate.labels=c("Months in Sentence","Severity of Crime", "Intercept"), dep.var.labels=c("Recidivism"))
+
+```
+
+```{r}
+ratio = model2$coefficients[2]/model1$coefficients[2]
+ratio
+```
+
+The ratio of: Repeat offense by sentence length (.03) divided by months in jail by the IV of republican judge (3.22) is .89, signifying that on average, .89% of individuals sentenced by a republican judge commit another crime
+
+```{r}
+model3=glm(data=data, family="binomial", Recidivates ~ model1$fitted.values + Severity.Of.Crime)
+summary(model3)
+
+summary(aov(model3))
+F_val=((summary(aov(model3))[[1]]$"Sum Sq"[1])+summary(aov(model3))[[1]]$"Sum Sq"[2])/(summary(aov(model3))[[1]]$"Sum Sq"[3]/summary(aov(model3))[[1]]$"Df"[3])
+F_val
+
+```
+
+The F-value is highly significant F(2,4997)=732.46
+The ratio method resulted in a value equal to the coefficent value of .227, signifying 22% of randomly assigned to republican judge repeat offense. The 2nd method with the true IV regression with the fitted values shows a flip in sign on the severity of crime coefficient
+
+```{r}
+iv_reg=ivreg(data=data, Recidivates ~ Months.In.Jail | Republican.Judge)
+summary(iv_reg)
+```
+
+using an R function IV_reg i get different results with a coefficient of .047. I am also not able to control for severity of crime
+
+------------
+In the research design above (using randomized judges), the always-takers are the criminals who are always going to commit another crime, no matter the judge's sentence. 
+
+The never-takers are the criminals who are always going to get clean no matter the judge's length of sentence. 
+
+The compliers are the individuals who are going to commit a repeat offense only if the judge decides on a longer sentence. 
+
+The defiers are the individuals who are never going to commit another crime only if the judge decides on a longer sentence.
+
+------------
+
+
+The model is non-monotonic because not all higher sentenced individuals commit a repeat offense and not all lower sentenced individuals stay out of jail, due to the presence of defiers and never takers in the sample. Because the treatment in this case was a republican judge with harsher sentencing that results in higher likelihood of a repeat offense, the defiers are those that do not commit crimes with the higher sentencing, which hopefully are most people in real life.
+
+In this dataset the compliers are those that commit a repeat offense as a result of the harsher sentence.
+
+This analysis supports the cycle of crime hypothesis that harsher sentencing increases the likelihood of committing a repeat offense.
